@@ -112,12 +112,15 @@ class OutOfOfficeParser {
 			throw new OutOfOfficeParserException('Out-of-office state is missing a start date');
 		}
 
+		$excludeMailingLists = 'not header :contains "List-Id"';
 		$formattedStart = $this->formatDateForSieve($state->getStart());
+		$startDateReached = "currentdate :value \"ge\" \"iso8601\" \"$formattedStart\"";
 		if ($state->getEnd() !== null) {
 			$formattedEnd = $this->formatDateForSieve($state->getEnd());
-			$condition = "allof(currentdate :value \"ge\" \"iso8601\" \"$formattedStart\", currentdate :value \"le\" \"iso8601\" \"$formattedEnd\")";
+			$endDateNotReached = "currentdate :value \"le\" \"iso8601\" \"$formattedEnd\"";
+			$condition = "allof($excludeMailingLists, $startDateReached, $endDateNotReached)";
 		} else {
-			$condition = "currentdate :value \"ge\" \"iso8601\" \"$formattedStart\"";
+			$condition = "allof($excludeMailingLists, $startDateReached)";
 		}
 
 		$escapedSubject = SieveUtils::escapeString($state->getSubject());
